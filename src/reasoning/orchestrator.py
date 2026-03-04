@@ -11,11 +11,22 @@ from collections import Counter
 from config import AppConfig
 
 
+SYSTEM_PROMPT = (
+    "You are a helpful, honest AI assistant. "
+    "CRITICAL RULE: If you don't have reliable information about something, "
+    "say 'I don't have information about that' rather than guessing or making things up. "
+    "Never fabricate facts, URLs, statistics, or descriptions of things you haven't been given information about. "
+    "It is always better to say you don't know than to hallucinate an answer. "
+    "You cannot browse the internet or access websites. "
+    "You can only answer from your training data and any context provided to you."
+)
+
+
 class ChainOfThought(dspy.Signature):
-    """Answer a question by reasoning step-by-step."""
+    """Answer a question by reasoning step-by-step. If you don't have reliable information, say so honestly rather than guessing."""
     question: str = dspy.InputField(desc="The question or task to reason about")
-    reasoning: str = dspy.OutputField(desc="Step-by-step reasoning process")
-    answer: str = dspy.OutputField(desc="Final answer based on the reasoning")
+    reasoning: str = dspy.OutputField(desc="Step-by-step reasoning process. If you lack information, state that clearly.")
+    answer: str = dspy.OutputField(desc="Final answer based on the reasoning. Say 'I don't have information about that' if unsure.")
 
 
 class Reflection(dspy.Signature):
@@ -106,6 +117,7 @@ def configure_dspy(config: AppConfig | None = None):
         model=f"ollama_chat/{config.model.reasoning_model}",
         api_base=config.model.ollama_base_url,
         temperature=config.model.reasoning_temperature,
+        system_prompt=SYSTEM_PROMPT,
     )
     dspy.configure(lm=lm)
     return lm
